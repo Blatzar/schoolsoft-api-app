@@ -86,30 +86,30 @@ def get_lessons(token, school, write_file_path='lessons.json'):
     return lesson_json
 
 """
-Gets the calender for the student based on unix timestamps (1597246367)
+Gets the calendar for the student based on unix timestamps (1597246367)
 The API uses milliseconds based timestamps, but the function takes second based ones and converts them.
 By default with no parameters it will use the current time as start and a month from that as end.
 """
-def get_calender(token, school, unix_time_start=None, unix_time_end=None, write_file_path='calender.json'):
+def get_calendar(token, school, unix_time_start=None, unix_time_end=None, write_file_path='calendar.json'):
     unix_time_start = time.time()*1000 if not unix_time_start else unix_time_start*1000
     unix_time_end = (time.time() + 2592000)*1000 if not unix_time_end else unix_time_end*1000
     # No decimals can get passed to the api without errors.
     unix_time_start = round(unix_time_start)
     unix_time_end = round(unix_time_end)
 
-    calender_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/notices/student/28/{unix_time_start}/{unix_time_end}/calendar,schoolcalendar,privatecalendar', 
+    calendar_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/notices/student/28/{unix_time_start}/{unix_time_end}/calendar,schoolcalendar,privatecalendar', 
         headers={
         "appversion": "2.3.2",
         "appos": "android",
         "token": token})
 
-    check_response(calender_response)
-    calender_json = calender_response.json()
+    check_response(calendar_response)
+    calendar_json = calendar_response.json()
 
     if write_file_path:
-        write_json(write_file_path, calender_json)
+        write_json(write_file_path, calendar_json)
 
-    return calender_json
+    return calendar_json
 
 """
 Basically get_token(), but looks at the previous tokens expiry date and determines if a new token should
