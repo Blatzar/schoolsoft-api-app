@@ -8,6 +8,7 @@ def write_json(file, data):
     with open(file,'w') as f:
         json.dump(data, f, indent=4)
 
+
 """
 Checks the responses from the server and throws errors accordingly.
 """
@@ -19,6 +20,7 @@ def check_response(response):
     if response.status_code == 500:
         # This might because no deviceid
         raise ValueError("Unknown error with request")
+
 
 """
 App key is the first step in authentication, it gets a key used to generate the token.
@@ -72,10 +74,11 @@ School is found in the url like this:
 "https://sms13.schoolsoft.se/   school   /jsp/student/right_student_startpage.jsp"
 """
 def get_lessons(token, school, write_file_path='lessons.json'):
+    # student/28, 28 is same the orgId from get_app_key. Investigate.
     lesson_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lessons/student/28', headers= {
     "appversion": "2.3.2",
     "appos": "android",
-    "token": token}).json()
+    "token": token})
 
     check_response(lesson_response)
     lesson_json = lesson_response.json()
@@ -84,6 +87,7 @@ def get_lessons(token, school, write_file_path='lessons.json'):
         write_json(write_file_path, lesson_json)
 
     return lesson_json
+
 
 """
 Gets the calendar for the student based on unix timestamps (1597246367)
@@ -110,6 +114,26 @@ def get_calendar(token, school, unix_time_start=None, unix_time_end=None, write_
         write_json(write_file_path, calendar_json)
 
     return calendar_json
+
+
+"""
+Gets the lunch :)
+"""
+def get_lunch(token, school, write_file_path='lunch.json'):
+    lunch_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lunchmenus/student/28', 
+        headers={
+        "appversion": "2.3.2",
+        "appos": "android",
+        "token": token})
+
+    check_response(lunch_response)
+    lunch_json = lunch_response.json()
+
+    if write_file_path:
+        write_json(write_file_path, lunch_json)
+
+    return lunch_json
+
 
 """
 Basically get_token(), but looks at the previous tokens expiry date and determines if a new token should
