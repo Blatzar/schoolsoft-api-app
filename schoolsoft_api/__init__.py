@@ -1,1 +1,1 @@
-from schoolsoft_api import *
+from schoolsoft_api.schoolsoft_api import *
