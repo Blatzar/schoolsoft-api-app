@@ -1,1 +1,1 @@
-import schoolsoft_api
+import .schoolsoft_api
