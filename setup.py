@@ -7,7 +7,7 @@ import io
 with open('README.md', 'r') as f:
     long_description = f.read()
 
-with io.open('anime_downloader/__version__.py', 'rt', encoding='utf8') as f:
+with io.open('schoolsoft_api/__version__.py', 'rt', encoding='utf8') as f:
     version = re.search(r'__version__ = \'(.*?)\'', f.read()).group(1)
 
 setup(
