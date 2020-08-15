@@ -79,9 +79,9 @@ Gets the lessons based on token and schoolname.
 School is found in the url like this:
 "https://sms13.schoolsoft.se/   school   /jsp/student/right_student_startpage.jsp"
 """
-def get_lessons(token, school, write_file_path='lessons.json'):
+def get_lessons(token, school, org_id, write_file_path='lessons.json'):
     # student/28, 28 is same the orgId from get_app_key. Investigate.
-    lesson_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lessons/student/28', headers= {
+    lesson_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lessons/student/{org_id}', headers= {
     "appversion": "2.3.2",
     "appos": "android",
     "token": token})
@@ -100,14 +100,14 @@ Gets the calendar for the student based on unix timestamps (1597246367)
 The API uses milliseconds based timestamps, but the function takes second based ones and converts them.
 By default with no parameters it will use the current time as start and a month from that as end.
 """
-def get_calendar(token, school, unix_time_start=None, unix_time_end=None, write_file_path='calendar.json'):
+def get_calendar(token, school, org_id, unix_time_start=None, unix_time_end=None, write_file_path='calendar.json'):
     unix_time_start = time.time()*1000 if not unix_time_start else unix_time_start*1000
     unix_time_end = (time.time() + 2592000)*1000 if not unix_time_end else unix_time_end*1000
     # No decimals can get passed to the api without errors.
     unix_time_start = round(unix_time_start)
     unix_time_end = round(unix_time_end)
 
-    calendar_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/notices/student/28/{unix_time_start}/{unix_time_end}/calendar,schoolcalendar,privatecalendar', 
+    calendar_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/notices/student/{org_id}/{unix_time_start}/{unix_time_end}/calendar,schoolcalendar,privatecalendar', 
         headers={
         "appversion": "2.3.2",
         "appos": "android",
@@ -125,8 +125,8 @@ def get_calendar(token, school, unix_time_start=None, unix_time_end=None, write_
 """
 Gets the lunch :)
 """
-def get_lunch(token, school, write_file_path='lunch.json'):
-    lunch_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lunchmenus/student/28', 
+def get_lunch(token, school, org_id, write_file_path='lunch.json'):
+    lunch_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lunchmenus/student/{org_id}', 
         headers={
         "appversion": "2.3.2",
         "appos": "android",
