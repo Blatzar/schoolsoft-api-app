@@ -56,7 +56,7 @@ def get_token(app_key_json={}, app_key_path=None, write_file_path='token.json'):
 
     # If no key is obtained from app_key_path or app_key_json raises an error.
     if not key:
-        raise InputError('No valid value for app_key. An app key is needed to generate the token')
+        raise RuntimeError('No valid value for app_key. An app key is needed to generate the token')
 
     token_response = requests.get('https://sms.schoolsoft.se/nacka/rest/app/token', headers={
         "appversion": "2.3.2",
