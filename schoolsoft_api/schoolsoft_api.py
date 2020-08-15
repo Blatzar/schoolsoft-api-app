@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import requests
 import json
 import time
@@ -46,11 +47,16 @@ This function shouldn't be used directly.
 Use get_updated_token() to prevent spamming the servers for new tokens.
 """
 def get_token(app_key_json={}, app_key_path=None, write_file_path='token.json'):
+    key = None
     if 'appKey' in app_key_json and not app_key_path:
         key = app_key_json['appKey']
     elif app_key_path:
         with open(app_key_path) as app_key_json:
-            key = json.load(app_key_json)['appKey']
+            key = json.load(app_key_json).get('appKey')
+
+    # If no key is obtained from app_key_path or app_key_json raises an error.
+    if not key:
+        raise InputError('No valid value for app_key. An app key is needed to generate the token')
 
     token_response = requests.get('https://sms.schoolsoft.se/nacka/rest/app/token', headers={
         "appversion": "2.3.2",
@@ -155,6 +161,7 @@ def get_updated_token(app_key_json={}, app_key_path=None, token_json={}, token_p
     # Assumes the date is formatted like "2020-08-12 17:48:22".
     unix_time = time.mktime(datetime.datetime.strptime(expiry_date, "%Y-%m-%d %H:%M:%S").timetuple())
     # Extra 5 minutes for good measure
+    # The token seems to last 3 hours.
     if time.time() + 5*60 > unix_time:
         token_json = get_token(app_key_json, app_key_path, write_file_path)
     else:
