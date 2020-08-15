@@ -26,9 +26,9 @@ def check_response(response):
 """
 App key is the first step in authentication, it gets a key used to generate the token.
 """
-def get_app_key(name, password, write_file_path='app_key.json'):
+def get_app_key(name, password, school, write_file_path='app_key.json'):
     # It actually sends the password plaintext to the server.
-    app_key_json = requests.post("https://sms.schoolsoft.se/nacka/rest/app/login",
+    app_key_json = requests.post(f"https://sms.schoolsoft.se/{school}/rest/app/login",
         data={'identification':name,
             'verification':password,
             'logintype':'4',
@@ -46,7 +46,7 @@ Note that the token has an expiry date.
 This function shouldn't be used directly. 
 Use get_updated_token() to prevent spamming the servers for new tokens.
 """
-def get_token(app_key_json={}, app_key_path=None, write_file_path='token.json'):
+def get_token(school, app_key_json={}, app_key_path=None, write_file_path='token.json'):
     key = None
     if 'appKey' in app_key_json and not app_key_path:
         key = app_key_json['appKey']
@@ -58,7 +58,7 @@ def get_token(app_key_json={}, app_key_path=None, write_file_path='token.json'):
     if not key:
         raise RuntimeError('No valid value for app_key. An app key is needed to generate the token')
 
-    token_response = requests.get('https://sms.schoolsoft.se/nacka/rest/app/token', headers={
+    token_response = requests.get(f'https://sms.schoolsoft.se/{school}/rest/app/token', headers={
         "appversion": "2.3.2",
         "appos": "android",
         "appkey": key,
@@ -145,7 +145,7 @@ def get_lunch(token, school, write_file_path='lunch.json'):
 Basically get_token(), but looks at the previous tokens expiry date and determines if a new token should
 be issued or use the old one. This function should be used when making applications.
 """
-def get_updated_token(app_key_json={}, app_key_path=None, token_json={}, token_path=None, write_file_path='token.json'):
+def get_updated_token(school, app_key_json={}, app_key_path=None, token_json={}, token_path=None, write_file_path='token.json'):
     if 'expiryDate' not in token_json and token_path:
         if os.path.isfile(token_path):
             with open(token_path) as f:
@@ -153,7 +153,7 @@ def get_updated_token(app_key_json={}, app_key_path=None, token_json={}, token_p
 
     if not token_json:
         # If no token passed to the function it generates a new one.
-        token_json = get_token(app_key_json, app_key_path, write_file_path)
+        token_json = get_token(school, app_key_json, app_key_path, write_file_path)
         return token_json
 
     # Cuts off milliseconds.
@@ -163,7 +163,7 @@ def get_updated_token(app_key_json={}, app_key_path=None, token_json={}, token_p
     # Extra 5 minutes for good measure
     # The token seems to last 3 hours.
     if time.time() + 5*60 > unix_time:
-        token_json = get_token(app_key_json, app_key_path, write_file_path)
+        token_json = get_token(school, app_key_json, app_key_path, write_file_path)
     else:
         write_json(write_file_path, token_json)
     return token_json
