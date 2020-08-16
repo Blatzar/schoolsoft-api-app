@@ -19,7 +19,6 @@ def check_response(response):
     if response.status_code == 404:
         raise ValueError("Incorrect parameters passed to the API")
     if response.status_code == 500:
-        # This might because no deviceid
         raise ValueError("Unknown error with request")
 
 
@@ -28,12 +27,15 @@ App key is the first step in authentication, it gets a key used to generate the 
 """
 def get_app_key(name, password, school, write_file_path='app_key.json'):
     # It actually sends the password plaintext to the server.
-    app_key_json = requests.post(f"https://sms.schoolsoft.se/{school}/rest/app/login",
+    app_key_response = requests.post(f"https://sms.schoolsoft.se/{school}/rest/app/login",
         data={'identification':name,
             'verification':password,
             'logintype':'4',
             'usertype':'1',
             }).json()
+
+    check_response(app_key_response)
+    app_key_json = app_key_response.json()
 
     if write_file_path:
         write_json(write_file_path, app_key_json)
@@ -80,7 +82,6 @@ School is found in the url like this:
 "https://sms13.schoolsoft.se/   school   /jsp/student/right_student_startpage.jsp"
 """
 def get_lessons(token, school, org_id, write_file_path='lessons.json'):
-    # student/28, 28 is same the orgId from get_app_key. Investigate.
     lesson_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lessons/student/{org_id}', headers= {
     "appversion": "2.3.2",
     "appos": "android",
@@ -167,3 +168,23 @@ def get_updated_token(school, app_key_json={}, app_key_path=None, token_json={},
     else:
         write_json(write_file_path, token_json)
     return token_json
+
+
+"""
+Gives the same info get_app_key(), but doesn't generate an app key. 
+Should be used when you want to get user info and already have a token. 
+"""
+def get_user_info(token, school, write_file_path='user.json'):
+    user_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/user/get', 
+        headers={
+        "appversion": "2.3.2",
+        "appos": "android",
+        "token": token})
+
+    check_response(user_response)
+    user_json = user_response.json()
+
+    if write_file_path:
+        write_json(write_file_path, user_json)
+
+    return user_json
