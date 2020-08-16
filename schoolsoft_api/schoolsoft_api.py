@@ -32,7 +32,7 @@ def get_app_key(name, password, school, write_file_path='app_key.json'):
             'verification':password,
             'logintype':'4',
             'usertype':'1',
-            }).json()
+            })
 
     check_response(app_key_response)
     app_key_json = app_key_response.json()
