@@ -5,15 +5,16 @@ import time
 import datetime
 import os
 
+
 def write_json(file, data):
-    with open(file,'w') as f:
+    with open(file, 'w') as f:
         json.dump(data, f, indent=4)
 
 
-"""
-Checks the responses from the server and throws errors accordingly.
-"""
 def check_response(response):
+    """
+    Checks the responses from the server and throws errors accordingly.
+    """
     if response.status_code == 401:
         raise ValueError("Old or incorrect token used, ensure you've got a working one with get_updated_token()")
     if response.status_code == 404:
@@ -22,17 +23,19 @@ def check_response(response):
         raise ValueError("Unknown error with request")
 
 
-"""
-App key is the first step in authentication, it gets a key used to generate the token.
-"""
-def get_app_key(name, password, school, write_file_path='app_key.json'):
+def get_app_key(name, password, school, write_file_path=None):
+    """
+    App key is the first step in authentication, it gets a key used to generate
+    the token.
+    """
+
     # It actually sends the password plaintext to the server.
     app_key_response = requests.post(f"https://sms.schoolsoft.se/{school}/rest/app/login",
-        data={'identification':name,
-            'verification':password,
-            'logintype':'4',
-            'usertype':'1',
-            })
+                                     data={'identification': name,
+                                           'verification': password,
+                                           'logintype': '4',
+                                           'usertype': '1',
+                                           })
 
     check_response(app_key_response)
     app_key_json = app_key_response.json()
@@ -42,13 +45,17 @@ def get_app_key(name, password, school, write_file_path='app_key.json'):
 
     return app_key_json
 
-"""
-Gets the token used for authentication from the app_key.
-Note that the token has an expiry date.
-This function shouldn't be used directly. 
-Use get_updated_token() to prevent spamming the servers for new tokens.
-"""
-def get_token(school, app_key_json={}, app_key_path=None, write_file_path='token.json'):
+
+def get_token(school, app_key_json=None, app_key_path=None, write_file_path=None):
+    """
+    Gets the token used for authentication from the app_key.
+    Note that the token has an expiry date.
+    This function shouldn't be used directly.
+    Use get_updated_token() to prevent spamming the servers for new tokens.
+    """
+    if app_key_json is None:
+        app_key_json = {}
+
     key = None
     if 'appKey' in app_key_json and not app_key_path:
         key = app_key_json['appKey']
@@ -64,8 +71,8 @@ def get_token(school, app_key_json={}, app_key_path=None, write_file_path='token
         "appversion": "2.3.2",
         "appos": "android",
         "appkey": key,
-        "deviceid":""
-      })
+        "deviceid": ""}
+    )
 
     check_response(token_response)
     token_json = token_response.json()
@@ -76,16 +83,16 @@ def get_token(school, app_key_json={}, app_key_path=None, write_file_path='token
     return token_json
 
 
-"""
-Gets the lessons based on token and schoolname.
-School is found in the url like this:
-"https://sms13.schoolsoft.se/   school   /jsp/student/right_student_startpage.jsp"
-"""
-def get_lessons(token, school, org_id, write_file_path='lessons.json'):
-    lesson_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lessons/student/{org_id}', headers= {
-    "appversion": "2.3.2",
-    "appos": "android",
-    "token": token})
+def get_lessons(token, school, org_id, write_file_path=None):
+    """
+    Gets the lessons based on token and schoolname.
+    School is found in the url like this:
+    "https://sms13.schoolsoft.se/   school   /jsp/student/right_student_startpage.jsp"
+    """
+    lesson_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lessons/student/{org_id}', headers={
+        "appversion": "2.3.2",
+        "appos": "android",
+        "token": token})
 
     check_response(lesson_response)
     lesson_json = lesson_response.json()
@@ -96,23 +103,25 @@ def get_lessons(token, school, org_id, write_file_path='lessons.json'):
     return lesson_json
 
 
-"""
-Gets the calendar for the student based on unix timestamps (1597246367)
-The API uses milliseconds based timestamps, but the function takes second based ones and converts them.
-By default with no parameters it will use the current time as start and a month from that as end.
-"""
-def get_calendar(token, school, org_id, unix_time_start=None, unix_time_end=None, write_file_path='calendar.json'):
-    unix_time_start = time.time()*1000 if not unix_time_start else unix_time_start*1000
-    unix_time_end = (time.time() + 2592000)*1000 if not unix_time_end else unix_time_end*1000
+def get_calendar(token, school, org_id, unix_time_start=None,
+                 unix_time_end=None, write_file_path=None):
+    """
+    Gets the calendar for the student based on unix timestamps (1597246367)
+    The API uses milliseconds based timestamps, but the function takes second based ones and converts them.
+    By default with no parameters it will use the current time as start and a month from that as end.
+    """
+    unix_time_start = time.time() * 1000 if not unix_time_start else unix_time_start * 1000
+    unix_time_end = (time.time() + 2592000) * 1000 if not unix_time_end else unix_time_end * 1000
     # No decimals can get passed to the api without errors.
     unix_time_start = round(unix_time_start)
     unix_time_end = round(unix_time_end)
+    url = f'https://sms.schoolsoft.se/{school}/api/notices/student/{org_id}/{unix_time_start}/{unix_time_end}/calendar,schoolcalendar,privatecalendar'
 
-    calendar_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/notices/student/{org_id}/{unix_time_start}/{unix_time_end}/calendar,schoolcalendar,privatecalendar', 
-        headers={
+    calendar_response = requests.get(url, headers={
         "appversion": "2.3.2",
         "appos": "android",
-        "token": token})
+        "token": token}
+    )
 
     check_response(calendar_response)
     calendar_json = calendar_response.json()
@@ -123,15 +132,16 @@ def get_calendar(token, school, org_id, unix_time_start=None, unix_time_end=None
     return calendar_json
 
 
-"""
-Gets the lunch :)
-"""
-def get_lunch(token, school, org_id, write_file_path='lunch.json'):
-    lunch_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/lunchmenus/student/{org_id}', 
-        headers={
+def get_lunch(token, school, org_id, write_file_path=None):
+    """
+    Gets the lunch :)
+    """
+    url = f'https://sms.schoolsoft.se/{school}/api/lunchmenus/student/{org_id}'
+    lunch_response = requests.get(url, headers={
         "appversion": "2.3.2",
         "appos": "android",
-        "token": token})
+        "token": token}
+    )
 
     check_response(lunch_response)
     lunch_json = lunch_response.json()
@@ -142,11 +152,20 @@ def get_lunch(token, school, org_id, write_file_path='lunch.json'):
     return lunch_json
 
 
-"""
-Basically get_token(), but looks at the previous tokens expiry date and determines if a new token should
-be issued or use the old one. This function should be used when making applications.
-"""
-def get_updated_token(school, app_key_json={}, app_key_path=None, token_json={}, token_path=None, write_file_path='token.json'):
+def get_updated_token(school, app_key_json=None, app_key_path=None,
+                      token_json=None, token_path=None, write_file_path=None):
+    """
+    Basically get_token(), but looks at the previous tokens expiry date and
+    determines if a new token should be issued or use the old one.
+    This function should be used when making applications.
+    """
+
+    # Avoids dicts as default arg.
+    if token_json is None:
+        token_json = {}
+    if app_key_json is None:
+        app_key_json = {}
+
     if 'expiryDate' not in token_json and token_path:
         if os.path.isfile(token_path):
             with open(token_path) as f:
@@ -163,23 +182,24 @@ def get_updated_token(school, app_key_json={}, app_key_path=None, token_json={},
     unix_time = time.mktime(datetime.datetime.strptime(expiry_date, "%Y-%m-%d %H:%M:%S").timetuple())
     # Extra 5 minutes for good measure
     # The token seems to last 3 hours.
-    if time.time() + 5*60 > unix_time:
+    if time.time() + 5 * 60 > unix_time:
         token_json = get_token(school, app_key_json, app_key_path, write_file_path)
     else:
         write_json(write_file_path, token_json)
     return token_json
 
 
-"""
-Gives the same info get_app_key(), but doesn't generate an app key. 
-Should be used when you want to get user info and already have a token. 
-"""
-def get_user_info(token, school, write_file_path='user.json'):
-    user_response = requests.get(f'https://sms.schoolsoft.se/{school}/api/user/get', 
-        headers={
+def get_user_info(token, school, write_file_path=None):
+    """
+    Gives the same info get_app_key(), but doesn't generate an app key.
+    Should be used when you want to get user info and already have a token.
+    """
+    url = f'https://sms.schoolsoft.se/{school}/api/user/get'
+    user_response = requests.get(url, headers={
         "appversion": "2.3.2",
         "appos": "android",
-        "token": token})
+        "token": token}
+    )
 
     check_response(user_response)
     user_json = user_response.json()
