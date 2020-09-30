@@ -208,3 +208,16 @@ def get_user_info(token, school, write_file_path=None):
         write_json(write_file_path, user_json)
 
     return user_json
+
+
+def get_schools(write_file_path=None):
+    url = 'https://sms.schoolsoft.se/rest/app/schoollist/prod'
+    schools = requests.get(url)
+    check_response(schools)
+    schools = schools.json()
+
+    if write_file_path:
+        write_json(write_file_path, schools)
+
+    return schools
+
