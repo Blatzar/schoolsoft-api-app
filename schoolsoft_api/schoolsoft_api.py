@@ -23,7 +23,7 @@ def check_response(response):
         raise ValueError("Unknown error with request")
 
 
-def get_app_key(name, password, school, write_file_path=None):
+def get_app_key(username, password, school, write_file_path=None):
     """
     App key is the first step in authentication, it gets a key used to generate
     the token.
@@ -31,7 +31,7 @@ def get_app_key(name, password, school, write_file_path=None):
 
     # It actually sends the password plaintext to the server.
     app_key_response = requests.post(f"https://sms.schoolsoft.se/{school}/rest/app/login",
-                                     data={'identification': name,
+                                     data={'identification': username,
                                            'verification': password,
                                            'logintype': '4',
                                            'usertype': '1',
@@ -221,3 +221,31 @@ def get_schools(write_file_path=None):
 
     return schools
 
+
+class Api:
+    def __init__(self, username, password, school):
+        self.username = username
+        self.password = password
+        self.school = school
+        self.app_key = get_app_key(self.username, self.password, self.school)
+        self.org_id = self.app_key['orgs'][0]['orgId']
+
+    @property
+    def token(self):
+        return get_updated_token(self.school, app_key_json=self.app_key)['token']
+
+    @property
+    def user(self):
+        return get_user_info(self.token, self.school)
+
+    @property
+    def lunch(self):
+        return get_lunch(self.token, self.school, self.org_id)
+
+    @property
+    def calendar(self):
+        return get_calendar(self.token, self.school, self.org_id)
+
+    @property
+    def lessons(self):
+        return get_lessons(self.token, self.school, self.org_id)
