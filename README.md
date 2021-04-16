@@ -36,4 +36,6 @@ Schoolname is found like this:
 <h3>Note:</h3>
 
 - **Activate mobile login on the schoolsoft webpage!**
-- Use `get_updated_token()` to prevent requesting too many new tokens
+- Use `get_updated_token()` to prevent requesting too many new tokens (when using the hard way)
+- Check the [schoolpage](https://sms.schoolsoft.se/rest/app/schoollist/prod) and see if your school's studentLoginMethods includes a 4, e.g `"studentLoginMethods":"0,4"`, that means the native app login (this api) is supported. 
+- This api is not tested with teachers and parents
